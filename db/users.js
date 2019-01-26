@@ -1,6 +1,7 @@
 var mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+// pirates Schema
 var itemSchema = mongoose.Schema(
   {
     name: String,
@@ -12,12 +13,12 @@ var itemSchema = mongoose.Schema(
   }
 );
 
-// creating our model
+// creating pirates Schema model
 var Item = mongoose.model("Item", itemSchema);
 
-// Retrieving data from database
+//  select all data from database
 const selectAll = callback => {
-  Item.find({}, function(err, items) {
+  Item.find({}, { name: 1, age: 1, _id: 0, isCaptured: 1 }, (err, items) => {
     if (err) {
       callback(err, null);
     } else {
@@ -26,6 +27,7 @@ const selectAll = callback => {
   });
 };
 
+// token example thired Task
 const data = [
   {
     id: 1,
@@ -40,9 +42,9 @@ const data = [
     displayName: "johnny"
   }
 ];
-
+// find user by token
 const findByToken = (token, cb) => {
-  process.nextTick(function() {
+  process.nextTick(() => {
     for (var i = 0, len = data.length; i < len; i++) {
       var record = data[i];
       if (record.token === token) {
@@ -52,6 +54,9 @@ const findByToken = (token, cb) => {
     return cb(null, null);
   });
 };
+
+// export all functions
+
 module.exports = User = mongoose.model("user", itemSchema);
 module.exports.selectAll = selectAll;
 module.exports.findByToken = findByToken;

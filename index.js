@@ -3,26 +3,26 @@ const express = require("express");
 const request = require("request");
 const mongoose = require("mongoose");
 const app = express();
-const bodyParser = require("body-parser");
+// to fetch Data from https://eila-pirate-api.herokuapp.com/pirates/prison
 const axios = require("axios");
+// cdn to connect with mlab
 const configKeys = require("./config/keys");
+// database config
 const db = require("./db");
-const catchThePirates = require("./catchThePirates");
+// requier passport and passport-http-bearer Strategy
 const passport = require("passport");
 const Strategy = require("passport-http-bearer").Strategy;
-
-// bodyParser MiddleWare
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// catchThePirates function count valid piratesFace
+const catchThePirates = require("./catchThePirates");
 
 // Connection with mLab
 mongoose
   .connect(configKeys.mongodbURI)
   .then(() => console.log("Successfully connection with mongoDB"))
   .catch(err => console.log(err));
-
+// use passport
 passport.use(
-  new Strategy(function(token, cb) {
+  new Strategy((token, cb) => {
     db.users.findByToken(token, (err, user) => {
       if (err) {
         return cb(err);
@@ -34,10 +34,9 @@ passport.use(
     });
   })
 );
-app.use(require("morgan")("combined"));
 
 app.get("/pirates", (req, res) => {
-  db.users.selectAll(function(err, data) {
+  db.users.selectAll((err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
@@ -49,7 +48,7 @@ app.get("/pirates", (req, res) => {
 app.get(
   "/pirates/countPirates",
   passport.authenticate("bearer", { session: false }),
-  function(req, res) {
+  (req, res) => {
     // requesing the piratesFaces from the given API
     request(
       "https://eila-pirate-api.herokuapp.com/pirates/prison",
