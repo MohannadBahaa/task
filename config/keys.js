@@ -2757,5 +2757,6 @@ module.exports = {
     ";(",
     ";-)",
     ";|"
-  ]
+  ],
+  secretOrKey: "secret"
 };

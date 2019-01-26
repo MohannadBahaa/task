@@ -1,22 +1,29 @@
-const passport = require("passport");
-var CustomBearerStrategy = require("passport-http-custom-bearer");
+const JwtStratagy = require("passport-jwt").Strategy;
+const ExtractJwt = require("passport-jwt").ExtractJwt;
+const mongoose = require("mongoose");
+const User = mongoose.model("user");
+const keys = require("../config/keys");
+
+const opts = {};
+
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = keys.secretOrKey;
 
 module.exports = passport => {
   passport.use(
-    "api-bearer",
-    new CustomBearerStrategy(
-      { headerName: "APIAuth", bodyName: "api_token", queryName: "api_token" },
-      function(token, done) {
-        User.findOne({ token: token }, function(err, user) {
-          if (err) {
-            return done(err);
-          }
-          if (!user) {
-            return done(null, false);
-          }
-          return done(null, user, { scope: "all" });
-        });
-      }
-    )
+    new JwtStratagy(opts, (jwt_payload, done) => {
+      passport.use(
+        new JwtStratagy(opts, (jwt_payload, done) => {
+          User.findById(jwt_payload.id)
+            .then(user => {
+              if (user) {
+                return done(null, user);
+              }
+              return done(null, false);
+            })
+            .catch(err => console.log(err));
+        })
+      );
+    })
   );
 };

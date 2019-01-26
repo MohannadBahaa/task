@@ -1,69 +1,62 @@
 // static server
 const express = require("express");
+const request = require("request");
 const mongoose = require("mongoose");
 const app = express();
 const bodyParser = require("body-parser");
 const arr = require("./tas.json");
-const passport = require("passport");
+const axios = require("axios");
+const configKeys = require("./config/keys");
+const db = require("./db");
+var catchThePirates = require("./catchThePirates");
+var passport = require("passport");
+var Strategy = require("passport-http-bearer").Strategy;
 
 // bodyParser MiddleWare
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// DB config
-const db = require("./config/keys").mongodbURI;
-
-// Connection with mongo
+// Connection with mLab
 mongoose
-  .connect(db)
+  .connect(configKeys.mongodbURI)
   .then(() => console.log("Successfully connection with mongoDB"))
   .catch(err => console.log(err));
 
-app.use(passport.initialize());
-// passport config
-require("./config/passport")(passport);
+passport.use(
+  new Strategy(function(token, cb) {
+    db.users.findByToken(token, (err, user) => {
+      if (err) {
+        return cb(err);
+      }
+      if (!user) {
+        return cb(null, false);
+      }
+      return cb(null, user);
+    });
+  })
+);
+app.use(require("morgan")("combined"));
 
 app.get("/pirates", (req, res) => {
   res.json(arr);
 });
 
-var piratesFace = require("./config/keys").piratesFace;
 app.get(
   "/pirates/countPirates",
-  passport.authenticate("api-bearer", { session: false }),
-  (req, res) => {
-    var eyes = [";", "8"]; // must
-    var nose = ["-", "~"]; // not have
-    var mouth = [")", "|"]; // must
-    // valid face count
-    var count = 0;
-
-    for (let i = 0; i < piratesFace.length; i++) {
-      // split string to arr to divide face parts
-      //Ex: currFace = ['8',')'];
-      var currFace = piratesFace[i].split("");
-      // to check the face have nose or not
-      var size = currFace.length;
-      // does'nt  have nose
-      if (size === 2) {
-        // check if valid face
-        if (eyes.includes(currFace[0]) && mouth.includes(currFace[1])) {
-          count++;
-        }
-      } else if (size === 3) {
-        // have nose
-        if (
-          // check if valid face
-          eyes.includes(currFace[0]) &&
-          nose.includes(currFace[1]) &&
-          mouth.includes(currFace[2])
-        ) {
-          count++;
+  passport.authenticate("bearer", { session: false }),
+  function(req, res) {
+    // requesing the piratesFaces from the given API
+    request(
+      "https://eila-pirate-api.herokuapp.com/pirates/prison",
+      (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+          const data = JSON.parse(body);
+          const pirateFaces = data.faces;
+          const piratesFound = catchThePirates.catchThePirates(pirateFaces);
+          res.json({ piratesFound: piratesFound });
         }
       }
-    }
-    // how much the piratesFace arr have valid face
-    res.json({ piratesFound: count });
+    );
   }
 );
 
