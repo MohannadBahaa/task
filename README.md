@@ -60,7 +60,8 @@ you will get all valid pirates faces
 
 ## Deployment
 
-heroku link : https://task-api-mvp.herokuapp.com/
+heroku link : https://task-api-mvp.herokuapp.com/pirates
+heroku link : https://task-api-mvp.herokuapp.com/pirates/countPirates
 
 ## Authors
 
