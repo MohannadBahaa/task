@@ -4,13 +4,12 @@ const request = require("request");
 const mongoose = require("mongoose");
 const app = express();
 const bodyParser = require("body-parser");
-const arr = require("./tas.json");
 const axios = require("axios");
 const configKeys = require("./config/keys");
 const db = require("./db");
-var catchThePirates = require("./catchThePirates");
-var passport = require("passport");
-var Strategy = require("passport-http-bearer").Strategy;
+const catchThePirates = require("./catchThePirates");
+const passport = require("passport");
+const Strategy = require("passport-http-bearer").Strategy;
 
 // bodyParser MiddleWare
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -38,7 +37,13 @@ passport.use(
 app.use(require("morgan")("combined"));
 
 app.get("/pirates", (req, res) => {
-  res.json(arr);
+  db.users.selectAll(function(err, data) {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.json(data);
+    }
+  });
 });
 
 app.get(
@@ -50,8 +55,8 @@ app.get(
       "https://eila-pirate-api.herokuapp.com/pirates/prison",
       (error, response, body) => {
         if (!error && response.statusCode == 200) {
-          const data = JSON.parse(body);
-          const pirateFaces = data.faces;
+          const pirateInfo = JSON.parse(body);
+          const pirateFaces = pirateInfo.faces;
           const piratesFound = catchThePirates.catchThePirates(pirateFaces);
           res.json({ piratesFound: piratesFound });
         }
@@ -61,5 +66,4 @@ app.get(
 );
 
 const port = process.env.PORT || 8000;
-
 app.listen(port, () => console.log(`server running on port ${port}`));
